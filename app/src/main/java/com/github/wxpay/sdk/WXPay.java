@@ -2,7 +2,9 @@ package com.github.wxpay.sdk;
 
 import com.github.wxpay.sdk.WXPayConstants.SignType;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 public class WXPay {
 
@@ -152,12 +154,32 @@ public class WXPay {
     public String requestWithoutCert(String urlSuffix, Map<String, String> reqData,
                                      int connectTimeoutMs, int readTimeoutMs) throws Exception {
         String msgUUID = reqData.get("nonce_str");
-        String reqBody = WXPayUtil.mapToXml(reqData);
+        String reqBody = parseString2Xml(reqData);
 
         String resp = this.wxPayRequest.requestWithoutCert(urlSuffix, msgUUID, reqBody, connectTimeoutMs, readTimeoutMs, autoReport);
         return resp;
     }
 
+    /**
+     * 参数进行XML化
+     * @param map,sign
+     * @return
+     */
+    public static String parseString2Xml(Map<String, String> map){
+        StringBuffer sb = new StringBuffer();
+        sb.append("<xml>");
+        Set es = map.entrySet();
+        Iterator iterator = es.iterator();
+        while(iterator.hasNext()){
+            Map.Entry entry = (Map.Entry)iterator.next();
+            String k = (String)entry.getKey();
+            String v = (String)entry.getValue();
+            sb.append("<"+k+">"+v+"</"+k+">");
+        }
+        //sb.append("<sign>"+sign+"</sign>");
+        sb.append("</xml>");
+        return sb.toString();
+    }
 
     /**
      * 需要证书的请求
@@ -186,7 +208,7 @@ public class WXPay {
     public Map<String, String> processResponseXml(String xmlStr) throws Exception {
         String RETURN_CODE = "return_code";
         String return_code;
-        Map<String, String> respData = WXPayUtil.xmlToMap(xmlStr);
+        Map<String, String> respData = WXPayUtil.getMapFromXML(xmlStr);
         if (respData.containsKey(RETURN_CODE)) {
             return_code = respData.get(RETURN_CODE);
         }
